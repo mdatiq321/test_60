@@ -1,0 +1,115 @@
+
+
+STEP 1: Install Docker (FIRST – MOST IMPORTANT)
+sudo apt update
+sudo apt install -y docker.io
+
+
+Start Docker:
+
+sudo systemctl start docker
+sudo systemctl enable docker
+
+
+Add user to docker group (VERY IMPORTANT):
+
+sudo usermod -aG docker $USER
+
+
+ Logout & login again (or reboot)
+
+Verify:
+
+docker --version
+docker run hello-world
+
+ STEP 2: Docker Swarm (NO INSTALL NEEDED)
+
+Docker Swarm is already inside Docker.
+
+Initialize Swarm:
+
+docker swarm init
+
+
+Verify:
+
+docker node ls
+
+
+ That’s it. Swarm is ready.
+
+ STEP 3: Install VirtualBox (FOR VAGRANT / SWARM LAB)
+sudo apt install -y build-essential dkms linux-headers-$(uname -r)
+sudo apt install -y virtualbox
+
+
+Load kernel module:
+
+sudo modprobe vboxdrv
+
+
+Verify:
+
+virtualbox --help
+
+ IMPORTANT (EXAM SAFETY)
+
+If you see VMX / KVM error, do this:
+
+sudo modprobe -r kvm_intel kvm
+
+
+ VirtualBox and KVM cannot run together.
+
+ STEP 4: Install Vagrant (OPTIONAL, but used in Swarm lab)
+sudo apt install -y wget gpg lsb-release
+
+wget -O- https://apt.releases.hashicorp.com/gpg \
+| sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+| sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+sudo apt update
+sudo apt install -y vagrant
+
+
+Verify:
+
+vagrant --version
+
+ STEP 5: Install kubectl (KUBERNETES CLIENT)
+curl -LO https://dl.k8s.io/release/$(curl -L -s \
+https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
+
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+
+Verify:
+
+kubectl version --client
+
+ STEP 6: Install Minikube (USE DOCKER DRIVER)
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+
+Verify:
+
+minikube version
+
+ STEP 7: Start Minikube (SAFE WAY)
+
+ DO NOT use VirtualBox driver
+
+Use Docker driver:
+
+minikube start --driver=docker
+
+
+Verify:
+
+kubectl get nodes
+

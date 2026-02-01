@@ -1,0 +1,152 @@
+   APP.PY
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello from Kubernetes"
+
+app.run(host="0.0.0.0", port=5000)
+
+reuirements.txt
+flask
+
+Dockerfile
+FROM python:3.10
+WORKDIR /app
+COPY . /app
+RUN pip install -r requirements.txt
+CMD ["python", "app.py"]
+
+
+docker build -t python-app .
+docker login
+docker tag python-app ateeq10/prac:latest
+docker push ateeq10/prac:latest
+
+Kubernets 
+kubectl create deployment python-app --image=ateeq10/prac:latest
+kubectl expose deployment python-app --type=NodePort --port=5000
+minikube service python-app
+
+
+DOCKER SWARM 
+
+mkdir swarm-lab
+cd swarm-lab
+
+nano Vagrantfile
+
+Vagrant.configure("2") do |config|
+
+  config.vm.define "manager" do |manager|
+    manager.vm.box = "ubuntu/focal64"
+    manager.vm.hostname = "manager"
+    manager.vm.network "private_network", ip: "192.168.56.10"
+    manager.vm.provision "shell", inline: <<-SHELL
+      apt update
+      apt install -y docker.io
+      systemctl start docker
+      systemctl enable docker
+      usermod -aG docker vagrant
+      docker swarm init --advertise-addr 192.168.56.10
+    SHELL
+  end
+
+  config.vm.define "worker" do |worker|
+    worker.vm.box = "ubuntu/focal64"
+    worker.vm.hostname = "worker"
+    worker.vm.network "private_network", ip: "192.168.56.11"
+    worker.vm.provision "shell", inline: <<-SHELL
+      apt update
+      apt install -y docker.io
+      systemctl start docker
+      systemctl enable docker
+      usermod -aG docker vagrant
+    SHELL
+  end
+
+end
+
+
+vagrant up
+vagrant ssh manager
+docker swarm join-token worker
+vagrant ssh worker
+docker swarm join --token SWMTKN-xxx 192.168.56.10:2377
+vagrant ssh manager
+docker node ls
+on manger node run
+
+docker service create \
+--name python-app \
+--replicas 2 \
+-p 5000:5000 \
+ateeq10/demo:latest
+
+docker service ls
+docker service ps python-app
+http://192.168.56.10:5000
+
+
+jenkin file 
+
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "ateeq10/demo"
+        IMAGE_TAG  = "latest"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/<your-username>/<your-repo>.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo " Image pushed successfully to Docker Hub"
+        }
+        failure {
+            echo " Build or Push failed"
+        }
+    }
+}
+
+
+
+
+

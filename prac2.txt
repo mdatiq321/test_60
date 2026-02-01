@@ -1,0 +1,149 @@
+mkdir java-swarm
+cd java-swarm
+
+mkdir -p src/main/java/com/example
+
+nano src/main/java/com/example/App.java
+
+import com.sun.net.httpserver.HttpServer;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+
+public class App {
+    public static void main(String[] args) throws Exception {
+
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+
+        server.createContext("/", exchange -> {
+            String response = "Hello Java + Maven + Docker Swarm";
+            exchange.sendResponseHeaders(200, response.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        });
+
+        server.start();
+        System.out.println("Server started on port 8080");
+    }
+}
+
+
+nano pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>demo</groupId>
+  <artifactId>java-swarm</artifactId>
+  <version>1.0</version>
+
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>App</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
+
+
+
+
+mvn package
+java -jar target/java-swarm-1.0.jar
+http://localhost:8080
+
+nano Dockerfile
+
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY target/java-swarm-1.0.jar app.jar
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
+
+jenkinfile
+
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "ateeq10/java-swarm"
+        IMAGE_TAG  = "latest"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/<your-username>/java-swarm.git'
+            }
+        }
+
+        stage('Build Maven Project') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
+            }
+        }
+    }
+}
+
+delpoy on docker swarn
+
+vagrant ssh manager
+docker service create \
+--name java-app \
+--replicas 2 \
+-p 8080:8080 \
+ateeq10/java-swarm:latest
+
+
+http://192.168.56.10:8080
+
+
+
+
+
+
+
+
