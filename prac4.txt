@@ -1,0 +1,11 @@
+if error in installaling reaect
+sudo apt remove -y nodejs npm
+sudo rm -rf /usr/local/lib/node_modules
+sudo rm -rf ~/.npm
+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+cd ~
+npx create-react-app react-swarm
+
