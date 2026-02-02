@@ -9,3 +9,63 @@ sudo apt install -y nodejs
 cd ~
 npx create-react-app react-swarm
 
+Docker file
+
+FROM node:18 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Run stage (nginx)
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+
+
+node js program
+
+node.js file
+
+const http = require("http");
+
+http.createServer((req, res) => {
+  console.log("Request received");
+  res.end("Hello from Node.js");
+}).listen(3000, "0.0.0.0");
+
+console.log("Server running on port 3000");
+
+
+nano package.json
+{
+  "name": "node-app",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  }
+}
+
+test  node app.js
+
+docker file
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package.json .
+RUN npm install
+
+COPY app.js .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+
+if error in starting kubenets
+minikube start --driver=docker
+
