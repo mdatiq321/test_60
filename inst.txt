@@ -113,3 +113,12 @@ Verify:
 
 kubectl get nodes
 
+
+to remove port service
+docker service ls
+docker service rm java-swarm
+sudo lsof -i :8080
+
+
+
+
