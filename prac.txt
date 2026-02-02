@@ -22,12 +22,17 @@ CMD ["python", "app.py"]
 
 docker build -t python-app .
 docker login
-docker tag python-app ateeq10/prac:latest
+docker tag python-app ateeq10/prac:latest                                                 
 docker push ateeq10/prac:latest
 
 Kubernets 
 kubectl create deployment python-app --image=ateeq10/prac:latest
-kubectl expose deployment python-app --type=NodePort --port=5000
+kubectl expose deployment python-app --type=NodePort --port=5000  or kubectl expose deployment maven-app \
+  --type=NodePort \
+  --port=9090 \
+  --target-port=9090
+
+
 minikube service python-app
 
 
@@ -71,6 +76,14 @@ end
 
 
 vagrant up
+
+
+IF ERROR  : lsmod | grep kvm
+            sudo systemctl stop libvirt
+             sudo modprobe -r kvm_intel kvm
+
+            
+
 vagrant ssh manager
 docker swarm join-token worker
 vagrant ssh worker
